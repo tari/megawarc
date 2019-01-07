@@ -508,12 +508,12 @@ Use  %prog restore FILE  to reconstruct original tar.
 
   if len(args) < 2:
     parser.print_usage()
-    exit(1)
+    sys.exit(1)
 
   if args[0] == "convert":
     if not os.path.exists(args[1]):
       print("Input file", args[1], "does not exist", file=sys.stderr)
-      exit(1)
+      sys.exit(1)
 
     try:
       mwb = MegawarcBuilder(args[1])
@@ -540,10 +540,10 @@ Use  %prog restore FILE  to reconstruct original tar.
     for ext in (".megawarc.warc.gz", ".megawarc.json.gz"):
       if not os.path.exists(args[1]+ext):
         print("Input file", args[1] + ext, "does not exist.", file=sys.stderr)
-        exit(1)
+        sys.exit(1)
     if os.path.exists(args[1]):
       print("Outputfile", args[1], "already exists.", file=sys.stderr)
-      exit(1)
+      sys.exit(1)
 
     try:
       mwr = MegawarcRestorer(args[1])
@@ -556,7 +556,7 @@ Use  %prog restore FILE  to reconstruct original tar.
 
   else:
     parser.print_usage()
-    exit(1)
+    sys.exit(1)
 
 if __name__ == "__main__":
     main()
