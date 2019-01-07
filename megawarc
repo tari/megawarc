@@ -116,7 +116,7 @@ def copy_to_stream(stream, input_filename, offset, size, verbose=False):
     progress = None
 
   try:
-    with open(input_filename, "r") as f:
+    with open(input_filename, "rb") as f:
       f.seek(offset)
 
       to_read = size
@@ -203,7 +203,7 @@ class CopyReader(object):
 
 # check for gzip errors
 def test_gz(filename, offset, size, verbose=False, copy_to_file=None):
-  with open(filename, "r") as f_stream:
+  with open(filename, "rb") as f_stream:
     f = RangeFile(f_stream, offset, size)
     if verbose and size > 10 * 1024 * 1024:
       progress = ProgressInfo(-size)
@@ -213,27 +213,26 @@ def test_gz(filename, offset, size, verbose=False, copy_to_file=None):
       f = CopyReader(f, copy_to_file)
       start_pos = copy_to_file.tell()
     try:
-      with open("/dev/null", "w") as dev_null:
-        gz = subprocess.Popen(["gunzip", "-tv"],
-                              shell=False,
-                              stdin=subprocess.PIPE,
-                              stdout=dev_null,
-                              stderr=dev_null)
-        while True:
-          buf = f.read(4096)
-          size -= len(buf)
-          if progress:
-            progress.update(-size)
-          if len(buf) > 0:
-            gz.stdin.write(buf)
-          else:
-            break
-        gz.stdin.close()
-        ret = gz.wait()
-        if ret != 0:
-          raise IOError("Could not decompress warc.gz. gunzip returned %d." % ret)
+      gz = subprocess.Popen(["gunzip", "-tv"],
+                            shell=False,
+                            stdin=subprocess.PIPE,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL)
+      while True:
+        buf = f.read(4096)
+        size -= len(buf)
         if progress:
-          progress.clear()
+          progress.update(-size)
+        if len(buf) > 0:
+          gz.stdin.write(buf)
+        else:
+          break
+      gz.stdin.close()
+      ret = gz.wait()
+      if ret != 0:
+        raise IOError("Could not decompress warc.gz. gunzip returned %d." % ret)
+      if progress:
+        progress.clear()
     except (IOError, OSError) as e:
       if progress:
         progress.clear()
@@ -259,13 +258,13 @@ class MegawarcBuilder(object):
     with open(self.output_warc_filename, "wb") as warc_out:
       with open(self.output_tar_filename, "wb") as tar_out:
         with gzip.open(self.output_json_filename, "wb") as json_out:
-          with tarfile.open(self.input_filename, "r") as tar:
+          with tarfile.open(self.input_filename, "rb") as tar:
             for tarinfo in tar:
               self.process_entry(tarinfo, warc_out, tar_out, json_out)
 
             padding = (tarfile.RECORDSIZE - tar_out.tell()) % tarfile.RECORDSIZE
             if padding > 0:
-              tar_out.write("\0" * padding)
+              tar_out.write(b"\0" * padding)
 
   def process_entry(self, entry, warc_out, tar_out, json_out):
     with open(self.input_filename, "r") as tar:
