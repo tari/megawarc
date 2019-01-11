@@ -356,7 +356,7 @@ class MegawarcPacker(object):
 
           padding = (tarfile.RECORDSIZE - tar_out.tell()) % tarfile.RECORDSIZE
           if padding > 0:
-            tar_out.write("\0" * padding)
+            tar_out.write(b"\0" * padding)
 
   def process_file(self, filename, warc_out, tar_out, json_out):
     # make tar header
@@ -424,7 +424,7 @@ class MegawarcPacker(object):
       copy_to_stream(tar_out, filename, 0, entry.size)
       padding = (tarfile.BLOCKSIZE - entry.size) % tarfile.BLOCKSIZE
       if padding > 0:
-        tar_out.write("\0" * padding)
+        tar_out.write(b"\0" * padding)
 
       d_target["container"] = "tar"
       d_target["offset"] = tar_offset
@@ -460,7 +460,7 @@ class MegawarcRestorer(object):
 
         padding = (tarfile.RECORDSIZE - tar_out.tell()) % tarfile.RECORDSIZE
         if padding > 0:
-          tar_out.write("\0" * padding)
+          tar_out.write(b"\0" * padding)
 
 
   def process_entry(self, entry, tar_out):
@@ -486,7 +486,7 @@ class MegawarcRestorer(object):
                      entry["target"]["offset"], entry["target"]["size"])
       padding = (tarfile.BLOCKSIZE - entry["target"]["size"]) % tarfile.BLOCKSIZE
       if padding > 0:
-        tar_out.write("\0" * padding)
+        tar_out.write(b"\0" * padding)
 
     else:
       raise Exception("Unkown container: %s for %s" %
